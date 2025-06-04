@@ -62,7 +62,7 @@ def save_outputs_to_json(outputs, filename, output_dir="./runs/output", model_in
 
 
 def eval_huatuogpt(conversations, gts):
-    bot = HuatuoChatbot("FreedomIntelligence/HuatuoGPT-Vision-7B")
+    bot = HuatuoChatbot("FreedomIntelligence/HuatuoGPT-Vision-7B", device="cuda:1")
     outputs = []
 
     for idx, messages in tqdm(enumerate(conversations), total=len(conversations), desc="Evaluating HuatuoGPT"):
