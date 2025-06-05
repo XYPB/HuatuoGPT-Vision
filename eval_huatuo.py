@@ -5,6 +5,9 @@ import datetime
 from copy import deepcopy
 from cli import HuatuoChatbot
 from tqdm import tqdm
+import cv2
+import numpy as np
+from PIL import Image
 
 import argparse
 
@@ -14,7 +17,8 @@ from preprocess_eval_datasets import (
     parse_rad_vqa_json_to_conversations,
     parse_omnimedvqa_jsons,
     parse_pvqa_to_conversations,
-    parse_slake_json_to_conversations
+    parse_slake_json_to_conversations,
+    parse_mecovqa_region_json_to_conversations
 )
 
 parser = argparse.ArgumentParser(description="Evaluate VLLM models on MeCoVQA dataset")
@@ -25,6 +29,25 @@ parser.add_argument("--temperature", type=float, default=0, help="Temperature fo
 torch.set_float32_matmul_precision('high')
 torch.backends.cuda.enable_flash_sdp(True)
 
+def highlight_region(image, mask, alpha=0.25):
+    """
+    Highlight a specific mask in the image by drawing a transparent overlay around it.
+    """
+    # Both image and mask should be PIL Images
+    cv2_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+    cv2_mask = np.array(mask)
+
+    # Ensure mask is binary
+    if cv2_mask.ndim == 3:
+        cv2_mask = cv2_mask[:, :, 0]
+    cv2_mask = (cv2_mask > 0).astype(np.uint8) * 255
+    # Create a colored overlay
+    color = (0, 0, 255)
+    overlay = np.zeros_like(cv2_image, dtype=np.uint8)
+    overlay[cv2_mask > 0] = color
+    # Blend the overlay with the original image
+    highlighted_image = cv2.addWeighted(cv2_image, 1 - alpha, overlay, alpha, 0)
+    return Image.fromarray(cv2.cvtColor(highlighted_image, cv2.COLOR_BGR2RGB))
 
 def save_outputs_to_json(outputs, filename, output_dir="./runs/output", model_info=None):
     """
@@ -67,6 +90,13 @@ def eval_huatuogpt(conversations, gts):
 
     for idx, messages in tqdm(enumerate(conversations), total=len(conversations), desc="Evaluating HuatuoGPT"):
         image_path = messages[1]['content'][1]['image']
+        image = Image.open(image_path).convert('RGB')
+
+        if len(messages[1]['content']) > 2 and messages[1]['content'][2]['type'] == 'region':
+            region_mask_path = messages[1]['content'][2]['region']
+            region_mask = Image.open(region_mask_path).convert('L')
+            image = highlight_region(image, region_mask)
+        image = image.resize((448, 448))  # Resize to 448x448 for HuatuoGPT
 
         system_prompt = messages[0]["content"][0]["text"]
         question = messages[1]['content'][0]['text']
@@ -74,7 +104,7 @@ def eval_huatuogpt(conversations, gts):
 
         with torch.inference_mode():
             response = bot.inference(
-                message, [image_path]
+                message, [image]
             )
             response = response[0].strip()
 
@@ -102,6 +132,9 @@ if __name__ == "__main__":
     elif args.dataset == "MeCoVQA":
         data_path = 'data/MeCoVQA/test/MeCoVQA_Complex_VQA_test.json'
         conversations, gts = parse_mecovqa_json_to_conversations(data_path)
+    elif args.dataset == "MeCoVQA_region":
+        data_path = 'data/MeCoVQA/test/MeCoVQA_Region_VQA_test.json'
+        conversations, gts = parse_mecovqa_region_json_to_conversations(data_path)
     elif args.dataset == "VQA-RAD":
         data_path = './data/VQA_RAD/VQA_RAD Dataset Public.json'
         conversations, gts = parse_rad_vqa_json_to_conversations(data_path)
