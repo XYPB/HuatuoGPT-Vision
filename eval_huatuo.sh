@@ -7,5 +7,4 @@ conda activate vllm
 # python eval_huatuo.py --num_samples -1 --dataset OmniMedVQA
 # python eval_huatuo.py --num_samples -1 --dataset PVQA
 # python eval_huatuo.py --num_samples -1 --dataset SLAKE
-export CUDA_VISIBLE_DEVICES=0,
-python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region
+export CUDA_VISIBLE_DEVICES=2,3; python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region
