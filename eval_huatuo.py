@@ -49,6 +49,27 @@ def highlight_region(image, mask, alpha=0.25):
     highlighted_image = cv2.addWeighted(cv2_image, 1 - alpha, overlay, alpha, 0)
     return Image.fromarray(cv2.cvtColor(highlighted_image, cv2.COLOR_BGR2RGB))
 
+def highlight_region_bbox(image, mask, width=5, color=(0, 0, 255)):
+    """
+    Highlight a bounding box in the image by drawing a rectangle around it.
+    """
+    # Convert image to numpy array
+    cv2_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+    
+    # Convert mask to bbox coordinates
+    mask = np.array(mask)
+    mask = (mask > 0).astype(np.uint8) * 255
+    x1 = np.min(np.where(mask > 0)[1])
+    x2 = np.max(np.where(mask > 0)[1])
+    y1 = np.min(np.where(mask > 0)[0])
+    y2 = np.max(np.where(mask > 0)[0])
+
+    # Draw the rectangle on the image
+    cv2.rectangle(cv2_image, (x1, y1), (x2, y2), color, width)
+
+    # Convert back to PIL Image
+    return Image.fromarray(cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB))
+
 def save_outputs_to_json(outputs, filename, output_dir="./runs/output", model_info=None):
     """
     Save model outputs to a JSON file.
@@ -95,7 +116,7 @@ def eval_huatuogpt(conversations, gts):
         if len(messages[1]['content']) > 2 and messages[1]['content'][2]['type'] == 'region':
             region_mask_path = messages[1]['content'][2]['region']
             region_mask = Image.open(region_mask_path).convert('L')
-            image = highlight_region(image, region_mask)
+            image = highlight_region_bbox(image, region_mask)
         image = image.resize((448, 448))  # Resize to 448x448 for HuatuoGPT
 
         system_prompt = messages[0]["content"][0]["text"]
