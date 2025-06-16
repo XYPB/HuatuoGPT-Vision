@@ -27,6 +27,7 @@ parser.add_argument("--num_samples", type=int, default=10, help="Number of sampl
 parser.add_argument("--temperature", type=float, default=0, help="Temperature for model inference (default: 0)")
 parser.add_argument("--bbox_coord", action='store_true', help="Use bounding box coordinates for models that support it (default: False)")
 parser.add_argument("--side_by_side", action='store_true', help="Use side-by-side mask visualization for models that support it (default: False)")
+parser.add_argument("--skip_region", action='store_true', help="Skip region highlighting in the image (default: False)")
 
 torch.set_float32_matmul_precision('high')
 torch.backends.cuda.enable_flash_sdp(True)
@@ -81,12 +82,12 @@ def mask_side_by_side(image, mask):
     cv2_mask = cv2.cvtColor(np.array(mask), cv2.COLOR_GRAY2BGR)
 
     # Ensure mask is binary
-    if cv2_mask.ndim == 3:
-        cv2_mask = cv2_mask[:, :, 0]
+    # if cv2_mask.ndim == 3:
+    #     cv2_mask = cv2_mask[:, :, 0]
     cv2_mask = (cv2_mask > 0).astype(np.uint8) * 255
 
     # Create a side-by-side image
-    combined_image = np.hstack((cv2_image, cv2_mask[:, :, None]))
+    combined_image = np.hstack((cv2_image, cv2_mask))
     
     return Image.fromarray(cv2.cvtColor(combined_image, cv2.COLOR_BGR2RGB))
 
@@ -146,7 +147,7 @@ def save_outputs_to_json(outputs, filename, output_dir="./runs/output", model_in
     return output_path
 
 
-def eval_huatuogpt(conversations, gts, use_region_bbox=False, side_by_side=False):
+def eval_huatuogpt(conversations, gts, use_region_bbox=False, side_by_side=False, skip_region=False):
     bot = HuatuoChatbot("FreedomIntelligence/HuatuoGPT-Vision-7B", device="cuda")
     outputs = []
 
@@ -158,7 +159,9 @@ def eval_huatuogpt(conversations, gts, use_region_bbox=False, side_by_side=False
         if len(messages[1]['content']) > 2 and messages[1]['content'][2]['type'] == 'region':
             region_mask_path = messages[1]['content'][2]['region']
             region_mask = Image.open(region_mask_path).convert('L')
-            if use_region_bbox:
+            if skip_region:
+                bbox = None
+            elif use_region_bbox:
                 bbox = mask_as_bbox(region_mask)
             elif side_by_side:
                 image = mask_side_by_side(image, region_mask)
@@ -245,7 +248,7 @@ if __name__ == "__main__":
 
     # Evaluate HuatuoGPT
     print(f"Evaluating HuatuoGPT on {num_samples} samples...")
-    HuatuoGPT_outputs = eval_huatuogpt(deepcopy(conversations)[:num_samples], gts[:num_samples], use_region_bbox=args.bbox_coord, side_by_side=args.side_by_side)
+    HuatuoGPT_outputs = eval_huatuogpt(deepcopy(conversations)[:num_samples], gts[:num_samples], use_region_bbox=args.bbox_coord, side_by_side=args.side_by_side, skip_region=args.skip_region)
     HuatuoGPT_model_info = {
         "model_name": "google/HuatuoGPT-4b-it",
         "model_type": "Image-Text-to-Text",
