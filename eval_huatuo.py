@@ -25,6 +25,8 @@ parser = argparse.ArgumentParser(description="Evaluate VLLM models on MeCoVQA da
 parser.add_argument("--dataset", type=str, default="MeCoVQA", help="Dataset to evaluate on (default: MeCoVQA)")
 parser.add_argument("--num_samples", type=int, default=10, help="Number of samples to evaluate (default: 10)")
 parser.add_argument("--temperature", type=float, default=0, help="Temperature for model inference (default: 0)")
+parser.add_argument("--bbox_coord", action='store_true', help="Use bounding box coordinates for models that support it (default: False)")
+parser.add_argument("--side_by_side", action='store_true', help="Use side-by-side mask visualization for models that support it (default: False)")
 
 torch.set_float32_matmul_precision('high')
 torch.backends.cuda.enable_flash_sdp(True)
@@ -70,6 +72,45 @@ def highlight_region_bbox(image, mask, width=5, color=(0, 0, 255)):
     # Convert back to PIL Image
     return Image.fromarray(cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB))
 
+def mask_side_by_side(image, mask):
+    """
+    Combine the original image and the mask side by side.
+    """
+    # Convert image and mask to numpy arrays
+    cv2_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+    cv2_mask = np.array(mask)
+
+    # Ensure mask is binary
+    if cv2_mask.ndim == 3:
+        cv2_mask = cv2_mask[:, :, 0]
+    cv2_mask = (cv2_mask > 0).astype(np.uint8) * 255
+
+    # Create a side-by-side image
+    combined_image = np.hstack((cv2_image, cv2_mask[:, :, None]))
+    
+    return Image.fromarray(cv2.cvtColor(combined_image, cv2.COLOR_BGR2RGB))
+
+def normalize_coordinates(box, image_width, image_height):
+    x1, y1, x2, y2 = box
+    normalized_box = [
+        round((x1 / image_width) * 1000),
+        round((y1 / image_height) * 1000),
+        round((x2 / image_width) * 1000),
+        round((y2 / image_height) * 1000)
+    ]
+    return normalized_box
+
+def mask_as_bbox(mask):
+    image_width, image_height = mask.size
+    mask = np.array(mask)
+    mask = (mask > 0).astype(np.uint8) * 255
+    x1 = np.min(np.where(mask > 0)[1])
+    x2 = np.max(np.where(mask > 0)[1])
+    y1 = np.min(np.where(mask > 0)[0])
+    y2 = np.max(np.where(mask > 0)[0])
+    bbox = (x1, y1, x2, y2)
+    return normalize_coordinates(bbox, image_width, image_height)
+
 def save_outputs_to_json(outputs, filename, output_dir="./runs/output", model_info=None):
     """
     Save model outputs to a JSON file.
@@ -105,22 +146,33 @@ def save_outputs_to_json(outputs, filename, output_dir="./runs/output", model_in
     return output_path
 
 
-def eval_huatuogpt(conversations, gts):
-    bot = HuatuoChatbot("FreedomIntelligence/HuatuoGPT-Vision-7B", device="cuda:1")
+def eval_huatuogpt(conversations, gts, use_region_bbox=False, side_by_side=False):
+    bot = HuatuoChatbot("FreedomIntelligence/HuatuoGPT-Vision-7B", device="cuda")
     outputs = []
 
     for idx, messages in tqdm(enumerate(conversations), total=len(conversations), desc="Evaluating HuatuoGPT"):
         image_path = messages[1]['content'][1]['image']
         image = Image.open(image_path).convert('RGB')
 
+        bbox = None
         if len(messages[1]['content']) > 2 and messages[1]['content'][2]['type'] == 'region':
             region_mask_path = messages[1]['content'][2]['region']
             region_mask = Image.open(region_mask_path).convert('L')
-            image = highlight_region_bbox(image, region_mask)
+            if use_region_bbox:
+                bbox = mask_as_bbox(region_mask)
+            elif side_by_side:
+                image = mask_side_by_side(image, region_mask)
+            else:
+                image = highlight_region_bbox(image, region_mask)
         image = image.resize((448, 448))  # Resize to 448x448 for HuatuoGPT
 
         system_prompt = messages[0]["content"][0]["text"]
         question = messages[1]['content'][0]['text']
+
+        if bbox:
+            question += f"\nRegion coordinates: {bbox[0]},{bbox[1]},{bbox[2]},{bbox[3]}"
+            system_prompt += "\nRegion of interest are provided as coordinates in the format x1,y1,x2,y2, where (x1,y1) is the top-left corner and (x2,y2) is the bottom-right corner. The coordinates are normalized to a scale of 0 to 1000, where 1000 corresponds to the full width or height of the image."
+
         message = f"INSTRUCTION: {system_prompt}\n\nQUESTION: {question}\n\nANSWER:"
 
         with torch.inference_mode():
@@ -191,7 +243,7 @@ if __name__ == "__main__":
 
     # Evaluate HuatuoGPT
     print(f"Evaluating HuatuoGPT on {num_samples} samples...")
-    HuatuoGPT_outputs = eval_huatuogpt(deepcopy(conversations)[:num_samples], gts[:num_samples])
+    HuatuoGPT_outputs = eval_huatuogpt(deepcopy(conversations)[:num_samples], gts[:num_samples], use_region_bbox=args.bbox_coord, side_by_side=args.side_by_side)
     HuatuoGPT_model_info = {
         "model_name": "google/HuatuoGPT-4b-it",
         "model_type": "Image-Text-to-Text",

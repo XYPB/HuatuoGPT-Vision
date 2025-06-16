@@ -1,0 +1,15 @@
+{
+    "include": [
+        "src",
+        "tests",
+        "examples"
+    ],
+    "exclude": [
+        "**/__pycache__",
+        "runs",
+        "data",
+        "assets",
+        "tmp"
+    ],
+    "typeCheckingMode": "off",
+}
