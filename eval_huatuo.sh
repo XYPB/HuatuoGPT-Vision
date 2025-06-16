@@ -14,5 +14,8 @@ conda activate vllm
 
 export CUDA_VISIBLE_DEVICES=2
 # python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region --bbox_coord
-python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region --side_by_side
-python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region --skip_region
+# python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region --side_by_side
+# python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region --skip_region
+
+python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region_yn --skip_region
+python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region_yn --side_by_side

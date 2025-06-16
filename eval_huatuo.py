@@ -18,7 +18,8 @@ from preprocess_eval_datasets import (
     parse_omnimedvqa_jsons,
     parse_pvqa_to_conversations,
     parse_slake_json_to_conversations,
-    parse_mecovqa_region_json_to_conversations
+    parse_mecovqa_region_json_to_conversations,
+    parse_mecovqa_region_yn_json_to_conversations
 )
 
 parser = argparse.ArgumentParser(description="Evaluate VLLM models on MeCoVQA dataset")
@@ -202,6 +203,12 @@ if __name__ == "__main__":
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     size = "full" if args.num_samples <= 0 else args.num_samples
     output_dir = os.path.join("./runs/output", f"eval_{timestamp}_{args.dataset}_{size}_huatuogpt")
+    if args.skip_region:
+        output_dir += "_skip_region"
+    if args.bbox_coord:
+        output_dir += "_bbox_coord"
+    if args.side_by_side:
+        output_dir += "_side_by_side"
     os.makedirs(output_dir, exist_ok=True)
     
     if args.dataset == "PMC-VQA":
@@ -213,6 +220,9 @@ if __name__ == "__main__":
     elif args.dataset == "MeCoVQA_region":
         data_path = 'data/MeCoVQA/test/MeCoVQA_Region_VQA_test.json'
         conversations, gts = parse_mecovqa_region_json_to_conversations(data_path)
+    elif args.dataset == "MeCoVQA_region_yn":
+        data_path = 'data/MeCoVQA/test/MeCoVQA_Region_Closed_VQA_test.json'
+        conversations, gts = parse_mecovqa_region_yn_json_to_conversations(data_path)
     elif args.dataset == "VQA-RAD":
         data_path = './data/VQA_RAD/VQA_RAD Dataset Public.json'
         conversations, gts = parse_rad_vqa_json_to_conversations(data_path)
