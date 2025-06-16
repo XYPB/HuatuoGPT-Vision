@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+set -x
 source activate base
 conda activate vllm
 # python eval_huatuo.py --num_samples -1
