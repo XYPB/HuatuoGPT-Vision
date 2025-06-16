@@ -78,7 +78,7 @@ def mask_side_by_side(image, mask):
     """
     # Convert image and mask to numpy arrays
     cv2_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-    cv2_mask = np.array(mask)
+    cv2_mask = cv2.cvtColor(np.array(mask), cv2.COLOR_GRAY2BGR)
 
     # Ensure mask is binary
     if cv2_mask.ndim == 3:

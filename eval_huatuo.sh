@@ -1,5 +1,6 @@
 #!/bin/bash
 
+source activate base
 conda activate vllm
 # python eval_huatuo.py --num_samples -1
 # python eval_huatuo.py --num_samples -1 --dataset PMC-VQA
@@ -10,5 +11,5 @@ conda activate vllm
 # export CUDA_VISIBLE_DEVICES=2,3; python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region
 
 export CUDA_VISIBLE_DEVICES=2
-python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region --bbox_coord
+# python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region --bbox_coord
 python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region --side_by_side
