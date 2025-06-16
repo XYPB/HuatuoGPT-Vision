@@ -172,6 +172,8 @@ def eval_huatuogpt(conversations, gts, use_region_bbox=False, side_by_side=False
         if bbox:
             question += f"\nRegion coordinates: {bbox[0]},{bbox[1]},{bbox[2]},{bbox[3]}"
             system_prompt += "\nRegion of interest are provided as coordinates in the format x1,y1,x2,y2, where (x1,y1) is the top-left corner and (x2,y2) is the bottom-right corner. The coordinates are normalized to a scale of 0 to 1000, where 1000 corresponds to the full width or height of the image."
+        elif side_by_side:
+            system_prompt += "\nThe image is shown side by side with the mask. Please answer based on the image and the mask."
 
         message = f"INSTRUCTION: {system_prompt}\n\nQUESTION: {question}\n\nANSWER:"
 
