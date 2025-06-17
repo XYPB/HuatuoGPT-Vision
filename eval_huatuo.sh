@@ -12,10 +12,11 @@ conda activate vllm
 # python eval_huatuo.py --num_samples -1 --dataset SLAKE
 # export CUDA_VISIBLE_DEVICES=2,3; python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region
 
-export CUDA_VISIBLE_DEVICES=2
+export CUDA_VISIBLE_DEVICES=0
 # python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region --bbox_coord
 # python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region --side_by_side
 # python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region --skip_region
 
-python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region_yn --skip_region
-python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region_yn --side_by_side
+# python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region_yn --skip_region
+# python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region_yn --side_by_side
+python eval_huatuo.py --num_samples -1 --dataset MeCoVQA_region_yn --bbox_coord
