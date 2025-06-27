@@ -20,7 +20,8 @@ from preprocess_eval_datasets import (
     parse_slake_json_to_conversations,
     parse_mecovqa_region_json_to_conversations,
     parse_mecovqa_region_yn_json_to_conversations,
-    parse_medsynth_no_region_json_to_conversations
+    parse_medsynth_no_region_json_to_conversations,
+    parse_mecovqa_region_yn_no_region_json_to_conversations
 )
 
 parser = argparse.ArgumentParser(description="Evaluate VLLM models on MeCoVQA dataset")
@@ -227,6 +228,9 @@ if __name__ == "__main__":
     elif args.dataset == "MeCoVQA_region_yn_hard":
         data_path = 'data/MeCoVQA/test/MeCoVQA_Region_Closed_VQA_test_hard.json'
         conversations, gts = parse_mecovqa_region_yn_json_to_conversations(data_path)
+    elif args.dataset == "MeCoVQA_region_yn_clean_no_region":
+        data_path = 'data/MeCoVQA/test/MeCoVQA_Region_Closed_VQA_test_clean_no_region.json'
+        conversations, gts = parse_mecovqa_region_yn_no_region_json_to_conversations(data_path)
     elif args.dataset == "medsynth_no_region":
         data_path = 'data/MeCoVQA/test/medvqa_synth_stage2_regionvqa_rl_test_maskless.json'
         conversations, gts = parse_medsynth_no_region_json_to_conversations(data_path)
