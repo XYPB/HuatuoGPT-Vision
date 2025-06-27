@@ -19,7 +19,8 @@ from preprocess_eval_datasets import (
     parse_pvqa_to_conversations,
     parse_slake_json_to_conversations,
     parse_mecovqa_region_json_to_conversations,
-    parse_mecovqa_region_yn_json_to_conversations
+    parse_mecovqa_region_yn_json_to_conversations,
+    parse_medsynth_no_region_json_to_conversations
 )
 
 parser = argparse.ArgumentParser(description="Evaluate VLLM models on MeCoVQA dataset")
@@ -223,6 +224,12 @@ if __name__ == "__main__":
     elif args.dataset == "MeCoVQA_region_yn":
         data_path = 'data/MeCoVQA/test/MeCoVQA_Region_Closed_VQA_test.json'
         conversations, gts = parse_mecovqa_region_yn_json_to_conversations(data_path)
+    elif args.dataset == "MeCoVQA_region_yn_hard":
+        data_path = 'data/MeCoVQA/test/MeCoVQA_Region_Closed_VQA_test_hard.json'
+        conversations, gts = parse_mecovqa_region_yn_json_to_conversations(data_path)
+    elif args.dataset == "medsynth_no_region":
+        data_path = 'data/MeCoVQA/test/medvqa_synth_stage2_regionvqa_rl_test_maskless.json'
+        conversations, gts = parse_medsynth_no_region_json_to_conversations(data_path)
     elif args.dataset == "VQA-RAD":
         data_path = './data/VQA_RAD/VQA_RAD Dataset Public.json'
         conversations, gts = parse_rad_vqa_json_to_conversations(data_path)
