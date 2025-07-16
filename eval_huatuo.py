@@ -238,7 +238,8 @@ if __name__ == "__main__":
         data_path = './data/VQA_RAD/VQA_RAD Dataset Public.json'
         conversations, gts = parse_rad_vqa_json_to_conversations(data_path)
     elif args.dataset == "OmniMedVQA":
-        data_path = './data/OmniMedVQA/QA_information/Open-access/'
+        # data_path = './data/OmniMedVQA/QA_information/Open-access/'
+        data_path = "./data/OmniMedVQA/QA_information/Open-access/omnimedvqa_test_3k.jsonl"
         conversations, gts = parse_omnimedvqa_jsons(data_path)
     elif args.dataset == "PVQA":
         data_path = './data/pvqa/qas/test_vqa.pkl'
