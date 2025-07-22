@@ -18,6 +18,7 @@ from preprocess_eval_datasets import (
     parse_omnimedvqa_jsons,
     parse_pvqa_to_conversations,
     parse_slake_json_to_conversations,
+    parse_imageclef_jsonl_to_conversations,
     parse_mecovqa_region_json_to_conversations,
     parse_mecovqa_region_yn_json_to_conversations,
     parse_medsynth_no_region_json_to_conversations,
@@ -247,6 +248,9 @@ if __name__ == "__main__":
     elif args.dataset == "SLAKE":
         data_path = './data/SLAKE/test.json'
         conversations, gts = parse_slake_json_to_conversations(data_path)
+    elif args.dataset == "imageclef":
+        data_path = 'data/ImageCLEF-2019/VQAMed2019Test/VQAMed2019_Test_Questions_w_Ref_Answers.jsonl'
+        conversations, gts = parse_imageclef_jsonl_to_conversations(data_path)
     else:
         raise ValueError(f"Unsupported dataset: {args.dataset}. Supported datasets are: PMC-VQA, MeCoVQA, VQA-RAD, OmniMedVQA.")
     
